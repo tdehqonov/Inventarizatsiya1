@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Inventarizatsiya1</string>
+    <string name="scan_barcode">Scan Barcode</string>
+    <string name="view_information">View information</string>
+</resources>
