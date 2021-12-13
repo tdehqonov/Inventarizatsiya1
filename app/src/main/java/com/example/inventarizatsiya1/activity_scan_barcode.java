@@ -50,6 +50,7 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
 
     StringRequest stringRequest;
     RequestQueue requestQueue;
+    boolean didItwork = false;
 
 
     @Override
@@ -72,13 +73,14 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
             public void onClick(View view) {
                 etScanner1.setText("");
                 etDetalNomeri.setText("");
-                etDetalSoni.setText("");
+                etDetalSoni.setText("0");
                 etAdres.setText("");
                 etEO.setText("");
                 etAdres.requestFocus();
                 btnSaqlash.setBackgroundColor(Color.GRAY);
             }
         });
+
 
         btnSaqlash.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,31 +95,96 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
 
 
                 } else {
-                    boolean didItwork = true;
+
                     try {
 
                         DateFormat data_format = new SimpleDateFormat("yyyy/MM/dd");
                         DateFormat time_format = new SimpleDateFormat("HH:mm:ss");
 
                         Date date = new Date();
-                        String EtScanner1 = etScanner1.getText().toString();
-                        String EtDetalNomeri = etDetalNomeri.getText().toString();
-                        String EtDetalSoni = etDetalSoni.getText().toString();
-                        String EtAdres = etAdres.getText().toString();
-                        String EtEO = etEO.getText().toString();
-                        String EtIzox = etIzox.getText().toString();
+                        final String EtScanner1 = etScanner1.getText().toString();
+                        final String EtDetalNomeri = etDetalNomeri.getText().toString();
+                        final String EtDetalSoni = etDetalSoni.getText().toString();
+                        final String EtAdres = etAdres.getText().toString();
+                        final String EtEO = etEO.getText().toString();
+                        final String EtIzox = etIzox.getText().toString();
 
-                        String scan_data = data_format.format(date);
-                        String scan_time = time_format.format(date);
+                        final String scan_data = data_format.format(date);
+                        final String scan_time = time_format.format(date);
 
 //                        HotOrNot entry = new HotOrNot(activity_scan_barcode.this);
 //                        entry.open();
 //                        entry.createEntry(EtScanner1, EtDetalNomeri, EtDetalSoni,EtAdres, EtEO,EtIzox,scan_data, scan_time);
 //                        entry.close();
 
-                        ///////////////////////
-                       ReqwestToAS400(EtScanner1, EtDetalNomeri, EtDetalSoni,EtAdres, EtEO,EtIzox,scan_data, scan_time);
-                        //////////////////////
+                        stringRequest = new StringRequest(Request.Method.POST, URL2, new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String respons) {
+                                System.out.println(respons);
+
+                                if(respons.contains("Saqlandi")==true){
+                                    txtBarcode.setText("Saqlandi");
+                                    txtBarcode.setTextColor(Color.BLUE);
+                                    btnSaqlash.setBackgroundColor(Color.BLUE);
+
+                                        etScanner1.setText("");
+                                        etDetalNomeri.setText("");
+                                        etDetalSoni.setText("0");
+                                        etEO.setText("");
+                                        etScanner1.requestFocus();
+
+
+                                } else if(respons.contains("Saqlanmadi")==true) {
+                                    txtBarcode.setText("Saqlandmadi");
+                                    txtBarcode.setTextColor(Color.RED);
+                                    btnSaqlash.setBackgroundColor(Color.RED);
+
+                                } else if(respons.contains("Connection error")==true ){
+                                    txtBarcode.setText("Host aloq yoq");
+                                    txtBarcode.setTextColor(Color.RED);
+                                    btnSaqlash.setBackgroundColor(Color.RED);
+
+                                } else if(respons.contains("Bu barcode saqlangan")==true ){
+                                    txtBarcode.setText("Bu barcode saqlangan");
+                                    txtBarcode.setTextColor(Color.RED);
+                                    btnSaqlash.setBackgroundColor(Color.RED);
+                                }
+
+                            }
+                        }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError volleyError) {
+                                System.out.println("Aloqani tekshiring "+volleyError);
+                                txtBarcode.setText("Aloqani tekshiring");
+                                txtBarcode.setTextColor(Color.RED);
+                                btnSaqlash.setBackgroundColor(Color.RED);
+
+                            }
+                        }) {
+                            protected Map<String, String> getParams() throws
+                                    AuthFailureError {
+                                Map<String, String> params = new HashMap<String, String>();
+                                params.put("holat", "WRITETOAS400");
+                                params.put("etScanner1", EtScanner1);
+                                params.put("etDetalNomeri", EtDetalNomeri);
+                                params.put("etDetalSoni", EtDetalSoni);
+                                params.put("etAdres", EtAdres);
+                                params.put("etEO", EtEO);
+                                params.put("etIN01IDX","0");
+                                params.put("etIzox", EtIzox);
+                                params.put("scan_data", scan_data);
+                                params.put("scan_time", scan_time);
+                                return params;
+                            }
+                        };
+
+                        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                                10000,
+                                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+                        requestQueue=Volley.newRequestQueue(activity_scan_barcode.this);
+                        requestQueue.add(stringRequest);
 
                     } catch (Exception e) {
                         didItwork = false;
@@ -125,18 +192,9 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
                         Dialog d = new Dialog(activity_scan_barcode.this);
                         d.setTitle("Dang!");
                         TextView tv = new TextView(activity_scan_barcode.this);
-                        tv.setText("ffffffffffffff"+error);
+                        tv.setText(error);
                         d.setContentView(tv);
                         d.show();
-                    } finally {
-                        if (didItwork) {
-                            etScanner1.setText("");
-                            etDetalNomeri.setText("");
-                            etDetalSoni.setText("");
-//                            etAdres.setText("");
-                            etEO.setText("");
-                            etScanner1.requestFocus();
-                        }
                     }
                 }
             }
@@ -194,61 +252,12 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
  //                   etScanner1.setText(etDetalNomeri.getText());
 
  //                   etAdres.requestFocus();
-                    btnSaqlash.requestFocusFromTouch();
+//                    btnSaqlash.requestFocusFromTouch();
                 }
             }
         });
     }
 
-    private void ReqwestToAS400(final String etScanner1, final String etDetalNomeri, final String etDetalSoni, final String etAdres, final String etEO, final String etIzox, final String scan_data, final String scan_time) {
-
-
-            stringRequest = new StringRequest(Request.Method.POST, URL2, new Response.Listener<String>() {
-                @Override
-                public void onResponse(String respons) {
-                    System.out.println(respons);
-
-                    
-
-
-
-
-
-
-                }
-            }, new Response.ErrorListener() {
-
-                @Override
-                public void onErrorResponse(VolleyError volleyError) {
-                    System.out.println("Aloqani tekshiring");
-                    txtBarcode.setText("Aloqani tekshiring");
-                    txtBarcode.setTextColor(Color.RED);
-                }
-            }) {
-                protected Map<String, String> getParams() throws
-                        AuthFailureError {
-                    Map<String, String> params = new HashMap<String, String>();
-                    params.put("holat", "WRITETOAS400");
-                    params.put("etScanner1", etScanner1);
-                    params.put("etDetalNomeri", etDetalNomeri);
-                    params.put("etDetalSoni", etDetalSoni);
-                    params.put("etAdres", etAdres);
-                    params.put("etEO", etEO);
-                    params.put("etIN01IDX","OK");
-                    params.put("etIzox", etIzox);
-                    params.put("scan_data", scan_data);
-                    params.put("scan_time", scan_time);
-                    return params;
-                }
-            };
-
-            stringRequest.setRetryPolicy(new DefaultRetryPolicy(
-                    10000,
-                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-            requestQueue=Volley.newRequestQueue(this);
-            requestQueue.add(stringRequest);
-        }
 
 
     public void showSoftKeyboard(View view) {
@@ -308,11 +317,15 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
             public void onFocusChange(View view, boolean hasFocus) {
                 if (hasFocus) {
                     etDetalSoni.setBackgroundColor(Color.YELLOW);
-                } else
+                    if(etDetalSoni.getText().toString().equals("0"))
+                    etDetalSoni.setText("");
+                } else {
                     etDetalSoni.setBackgroundColor(Color.GREEN);
+                if(etDetalSoni.getText().toString().equals(""))
+                    etDetalSoni.setText("0");
+                }
             }
         });
-
 
         etAdres.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -335,6 +348,7 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
                     etEO.setText("");
                 } else
                     etEO.setBackgroundColor(Color.GREEN);
+
             }
         });
 
