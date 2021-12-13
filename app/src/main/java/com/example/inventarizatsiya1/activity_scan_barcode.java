@@ -15,18 +15,41 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
 
 public class activity_scan_barcode<editText> extends AppCompatActivity {
 
     EditText etScanner1, etDetalNomeri, etDetalSoni, etDetalSoniJami, etAdres, etEO,etIzox;
     Button btnSaqlash, btnKorish, btnTozalash;
-    String birmarta = "";
+    TextView txtBarcode;
+
+    Consrants constants=new Consrants();
+    String sahifa="SAPinventarizatsiya.jsp";
+    String URL2=constants.URL+sahifa;
+
+    StringRequest stringRequest;
+    RequestQueue requestQueue;
 
 
     @Override
@@ -67,6 +90,8 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
 //                    MediaPlayer[] ourSong = new MediaPlayer[0];
 //                    ourSong[0] = MediaPlayer.create(this,R.raw.scanredy);
 //                    ourSong[0].start();
+
+
                 } else {
                     boolean didItwork = true;
                     try {
@@ -85,11 +110,14 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
                         String scan_data = data_format.format(date);
                         String scan_time = time_format.format(date);
 
-                        HotOrNot entry = new HotOrNot(activity_scan_barcode.this);
-                        entry.open();
-                        entry.createEntry(EtScanner1, EtDetalNomeri, EtDetalSoni,EtAdres, EtEO,EtIzox,scan_data, scan_time);
-                        entry.close();
-                        birmarta = "";
+//                        HotOrNot entry = new HotOrNot(activity_scan_barcode.this);
+//                        entry.open();
+//                        entry.createEntry(EtScanner1, EtDetalNomeri, EtDetalSoni,EtAdres, EtEO,EtIzox,scan_data, scan_time);
+//                        entry.close();
+
+                        ///////////////////////
+                       ReqwestToAS400(EtScanner1, EtDetalNomeri, EtDetalSoni,EtAdres, EtEO,EtIzox,scan_data, scan_time);
+                        //////////////////////
 
                     } catch (Exception e) {
                         didItwork = false;
@@ -97,7 +125,7 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
                         Dialog d = new Dialog(activity_scan_barcode.this);
                         d.setTitle("Dang!");
                         TextView tv = new TextView(activity_scan_barcode.this);
-                        tv.setText(error);
+                        tv.setText("ffffffffffffff"+error);
                         d.setContentView(tv);
                         d.show();
                     } finally {
@@ -172,6 +200,57 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
         });
     }
 
+    private void ReqwestToAS400(final String etScanner1, final String etDetalNomeri, final String etDetalSoni, final String etAdres, final String etEO, final String etIzox, final String scan_data, final String scan_time) {
+
+
+            stringRequest = new StringRequest(Request.Method.POST, URL2, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String respons) {
+                    System.out.println(respons);
+
+                    
+
+
+
+
+
+
+                }
+            }, new Response.ErrorListener() {
+
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    System.out.println("Aloqani tekshiring");
+                    txtBarcode.setText("Aloqani tekshiring");
+                    txtBarcode.setTextColor(Color.RED);
+                }
+            }) {
+                protected Map<String, String> getParams() throws
+                        AuthFailureError {
+                    Map<String, String> params = new HashMap<String, String>();
+                    params.put("holat", "WRITETOAS400");
+                    params.put("etScanner1", etScanner1);
+                    params.put("etDetalNomeri", etDetalNomeri);
+                    params.put("etDetalSoni", etDetalSoni);
+                    params.put("etAdres", etAdres);
+                    params.put("etEO", etEO);
+                    params.put("etIN01IDX","OK");
+                    params.put("etIzox", etIzox);
+                    params.put("scan_data", scan_data);
+                    params.put("scan_time", scan_time);
+                    return params;
+                }
+            };
+
+            stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                    10000,
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            requestQueue=Volley.newRequestQueue(this);
+            requestQueue.add(stringRequest);
+        }
+
+
     public void showSoftKeyboard(View view) {
         if (view.requestFocus()) {
             InputMethodManager imm = (InputMethodManager)
@@ -201,6 +280,7 @@ public class activity_scan_barcode<editText> extends AppCompatActivity {
         btnSaqlash = findViewById(R.id.btnSaqlash);
         btnKorish = findViewById(R.id.btnKorish);
         btnTozalash = findViewById(R.id.btnTozalash);
+        txtBarcode=findViewById(R.id.txtBarcode);
 
         etScanner1.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override

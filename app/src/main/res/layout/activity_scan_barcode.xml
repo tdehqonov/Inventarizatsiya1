@@ -30,7 +30,7 @@
         android:id="@+id/txtBarcode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Barcode"
+        android:text="Barcode status"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.467"
@@ -78,8 +78,7 @@
         android:layout_marginTop="4dp"
         android:layout_marginEnd="4dp"
         android:background="@android:color/holo_green_light"
-        android:inputType="number"
-        android:maxLength="9"
+        android:maxLength="10"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/txtDetalNomeri"
         app:layout_constraintTop_toBottomOf="@+id/etScanner1" />
